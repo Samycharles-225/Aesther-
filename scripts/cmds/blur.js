@@ -6,12 +6,12 @@ module.exports = {
   config: {
     name: "blur",
     version: "1.0",
-    author: "Saimx69x",
+    author: "Christus",
     countDown: 5,
     role: 0,
     category: "image",
-    description: "Blur replied image using specified level",
-    guide: "{pn} [level] — Reply to an image and choose blur level (default 3)"
+    description: "Floute l'image répondue en utilisant le niveau spécifié",
+    guide: "{pn} [niveau] — Répondre à une image et choisir le niveau de flou (par défaut 3)"
   },
 
   onStart: async function ({ api, args, message, event }) {
@@ -22,16 +22,16 @@ module.exports = {
       if (event.type === "message_reply") {
         const attachment = event.messageReply.attachments?.[0];
         if (!attachment)
-          return message.reply("❌ | Please reply to an image.");
+          return message.reply("❌ | Veuillez répondre à une image.");
         if (attachment.type !== "photo")
-          return message.reply("❌ | Only image replies are supported. Video or files not allowed.");
+          return message.reply("❌ | Seules les images sont prises en charge. Les vidéos ou fichiers ne sont pas autorisés.");
         imageUrl = attachment.url;
       } else {
-        return message.reply("❌ | Please reply to an image to use this command.");
+        return message.reply("❌ | Veuillez répondre à une image pour utiliser cette commande.");
       }
 
       api.setMessageReaction("🌫️", event.messageID, () => {}, true);
-      const waitMsg = await message.reply(`Applying blur level ${blurLevel}... 🌫️`);
+      const waitMsg = await message.reply(`Application du flou niveau ${blurLevel}... 🌫️`);
 
       const RAW = "https://raw.githubusercontent.com/Saim-x69x/sakura/main/ApiUrl.json";
       const { data } = await axios.get(RAW);
@@ -46,13 +46,13 @@ module.exports = {
       message.unsend(waitMsg.messageID);
       api.setMessageReaction("✅", event.messageID, () => {}, true);
       message.reply({
-        body: `✅ | Here's your blurred image (Level: ${blurLevel}) 🌫️`,
+        body: `✅ | Voici votre image floutée (Niveau : ${blurLevel}) 🌫️`,
         attachment: fs.createReadStream(filePath)
       });
 
     } catch (error) {
       console.error(error);
-      message.reply("❌ | Failed to apply blur. Please try again later.");
+      message.reply("❌ | Échec de l'application du flou. Veuillez réessayer plus tard.");
     }
   }
 };
