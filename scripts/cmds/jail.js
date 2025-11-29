@@ -7,19 +7,19 @@ module.exports = {
     name: "jail",
     aliases: ["prison"],
     version: "1.0",
-    author: "Saimx69x",
+    author: "Christus",
     countDown: 5,
     role: 0,
-    description: "Put someone in jail 😆",
+    description: "Met quelqu’un en prison 😆",
     category: "fun",
     guide: {
-      en: "{pn} @tag or reply to a message"
+      en: "{pn} @tag ou répondre à un message"
     }
   },
 
   langs: {
     en: {
-      noTarget: "⚠️ You must tag someone or reply to their message."
+      noTarget: "⚠️ Vous devez taguer quelqu’un ou répondre à son message."
     }
   },
 
@@ -40,7 +40,7 @@ module.exports = {
 
       const apiBaseRes = await axios.get("https://raw.githubusercontent.com/Saim-x69x/sakura/main/ApiUrl.json");
       const apiBase = apiBaseRes.data?.apiv1;
-      if (!apiBase) return message.reply("❌ API base URL not found in ApiUrl.json.");
+      if (!apiBase) return message.reply("❌ URL de base de l'API introuvable dans ApiUrl.json.");
 
       const apiURL = `${apiBase}/api/jail?url=${encodeURIComponent(avatarURL)}`;
       const imgPath = path.join(__dirname, "tmp", `${targetID}_jail.png`);
@@ -49,14 +49,14 @@ module.exports = {
       await fs.outputFile(imgPath, response.data);
 
       await message.reply({
-        body: `🚔 ${userInfo} is now behind bars!`,
+        body: `🚔 ${userInfo} est maintenant derrière les barreaux !`,
         attachment: fs.createReadStream(imgPath)
       });
 
       fs.unlinkSync(imgPath);
     } catch (err) {
       console.error(err);
-      message.reply("❌ Failed to generate jail image. Please try again later.");
+      message.reply("❌ Échec de la génération de l'image de prison. Veuillez réessayer plus tard.");
     }
   }
 };
