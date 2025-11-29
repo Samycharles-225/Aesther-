@@ -1,13 +1,13 @@
-const a = require("yt-search");
-const b = require("axios");
-const c = require("fs");
-const d = require("path");
+const ytSearch = require("yt-search");
+const axios = require("axios");
+const fs = require("fs");
+const path = require("path");
 
-const e = "http://65.109.80.126:20409/aryan/yx";
+const API_BASE = "http://65.109.80.126:20409/aryan/yx";
 
-async function f(g) {
-  const h = await b({ url: g, responseType: "stream" });
-  return h.data;
+async function fetchStream(url) {
+  const res = await axios({ url, responseType: "stream" });
+  return res.data;
 }
 
 module.exports = {
@@ -15,98 +15,99 @@ module.exports = {
     name: "youtube",
     aliases: ["ytb"],
     version: "0.0.9",
-    author: "ArYAN",
+    author: "Christus",
     countDown: 5,
     role: 0,
-    description: { en: "Search and download YouTube video/audio" },
-    category: "media",
-    guide: { en: "{pn} -v <query|url>\n{pn} -a <query|url>" }
+    description: { fr: "Rechercher et télécharger une vidéo/audio YouTube" },
+    category: "média",
+    guide: { fr: "{pn} -v <recherche|url>\n{pn} -a <recherche|url>" }
   },
 
-  onStart: async function ({ api: i, args, event: k, commandName: l }) {
-    const aryan = args;
-    const n = aryan[0];
-    if (!["-v", "-a"].includes(n)) return i.sendMessage("❌ Usage: /ytb [-a|-v] <search or YouTube URL>", k.threadID, k.messageID);
+  onStart: async function ({ api, args, event, commandName }) {
+    const mode = args[0];
+    if (!["-v", "-a"].includes(mode))
+      return api.sendMessage("❌ Utilisation : /ytb [-a|-v] <recherche ou URL YouTube>", event.threadID, event.messageID);
 
-    const o = aryan.slice(1).join(" ");
-    if (!o) return i.sendMessage("❌ Provide a search query or URL.", k.threadID, k.messageID);
+    const query = args.slice(1).join(" ");
+    if (!query) return api.sendMessage("❌ Fournissez une recherche ou une URL.", event.threadID, event.messageID);
 
-    if (o.startsWith("http")) {
-      if (n === "-v") return await p(o, "mp4", i, k);
-      else return await p(o, "mp3", i, k);
+    if (query.startsWith("http")) {
+      if (mode === "-v") return await downloadYT(query, "mp4", api, event);
+      else return await downloadYT(query, "mp3", api, event);
     }
 
     try {
-      const q = await a(o);
-      const r = q.videos.slice(0, 6);
-      if (r.length === 0) return i.sendMessage("❌ No results found.", k.threadID, k.messageID);
+      const results = await ytSearch(query);
+      const videos = results.videos.slice(0, 6);
+      if (videos.length === 0) return api.sendMessage("❌ Aucun résultat trouvé.", event.threadID, event.messageID);
 
-      let s = "";
-      r.forEach((t, u) => {
-        const v = n === "-v" ? t.seconds ? "360p" : "Unknown" : "128kbps";
-        s += `• Title: ${t.title}\n• Quality: ${v}\n\n`;
+      let body = "";
+      videos.forEach((vid) => {
+        const quality = mode === "-v" ? (vid.seconds ? "360p" : "Inconnue") : "128kbps";
+        body += `• Titre : ${vid.title}\n• Qualité : ${quality}\n\n`;
       });
 
-      const w = await Promise.all(r.map(x => f(x.thumbnail)));
+      const thumbnails = await Promise.all(videos.map(v => fetchStream(v.thumbnail)));
 
-      i.sendMessage(
-        { body: s + "Reply with number (1-6) to download", attachment: w },
-        k.threadID,
-        (err, y) => {
-          global.GoatBot.onReply.set(y.messageID, {
-            commandName: l,
-            messageID: y.messageID,
-            author: k.senderID,
-            results: r,
-            type: n
+      api.sendMessage(
+        { body: body + "Répondez avec un numéro (1-6) pour télécharger", attachment: thumbnails },
+        event.threadID,
+        (err, info) => {
+          global.GoatBot.onReply.set(info.messageID, {
+            commandName,
+            messageID: info.messageID,
+            author: event.senderID,
+            results: videos,
+            type: mode
           });
         },
-        k.messageID
+        event.messageID
       );
     } catch (err) {
       console.error(err);
-      i.sendMessage("❌ Failed to search YouTube.", k.threadID, k.messageID);
+      api.sendMessage("❌ Impossible de rechercher sur YouTube.", event.threadID, event.messageID);
     }
   },
 
-  onReply: async function ({ event: z, api: A, Reply: B }) {
-    const { results: C, type: D } = B;
-    const E = parseInt(z.body);
+  onReply: async function ({ event, api, Reply }) {
+    const { results, type } = Reply;
+    const choice = parseInt(event.body);
 
-    if (isNaN(E) || E < 1 || E > C.length) return A.sendMessage("❌ Invalid selection. Choose 1-6.", z.threadID, z.messageID);
+    if (isNaN(choice) || choice < 1 || choice > results.length)
+      return api.sendMessage("❌ Sélection invalide. Choisissez un numéro entre 1 et 6.", event.threadID, event.messageID);
 
-    const F = C[E - 1];
-    await A.unsendMessage(B.messageID);
+    const video = results[choice - 1];
+    await api.unsendMessage(Reply.messageID);
 
-    if (D === "-v") await p(F.url, "mp4", A, z);
-    else await p(F.url, "mp3", A, z);
+    if (type === "-v") await downloadYT(video.url, "mp4", api, event);
+    else await downloadYT(video.url, "mp3", api, event);
   }
 };
 
-async function p(q, r, s, t) {
+async function downloadYT(url, format, api, event) {
   try {
-    const { data: u } = await b.get(`${e}?url=${encodeURIComponent(q)}&type=${r}`);
-    const v = u.download_url;
-    if (!u.status || !v) throw new Error("API failed");
+    const { data } = await axios.get(`${API_BASE}?url=${encodeURIComponent(url)}&type=${format}`);
+    const downloadUrl = data.download_url;
+    if (!data.status || !downloadUrl) throw new Error("API a échoué");
 
-    const w = d.join(__dirname, `yt_${Date.now()}.${r}`);
-    const x = c.createWriteStream(w);
-    const y = await b({ url: v, responseType: "stream" });
-    y.data.pipe(x);
+    const filePath = path.join(__dirname, `yt_${Date.now()}.${format}`);
+    const writer = fs.createWriteStream(filePath);
+    const stream = await axios({ url: downloadUrl, responseType: "stream" });
+    stream.data.pipe(writer);
 
     await new Promise((resolve, reject) => {
-      x.on("finish", resolve);
-      x.on("error", reject);
+      writer.on("finish", resolve);
+      writer.on("error", reject);
     });
 
-    await s.sendMessage(
-      { attachment: c.createReadStream(w) },
-      t.threadID,
-      () => c.unlinkSync(w),
-      t.messageID
+    await api.sendMessage(
+      { attachment: fs.createReadStream(filePath) },
+      event.threadID,
+      () => fs.unlinkSync(filePath),
+      event.messageID
     );
   } catch (err) {
-    console.error(`${r} error:`, err.message);
-    s.sendMessage(`❌ Failed to download ${r}.`, t.threadID, t.messageID);
+    console.error(`${format} erreur :`, err.message);
+    api.sendMessage(`❌ Échec du téléchargement de ${format}.`, event.threadID, event.messageID);
   }
-  }
+}
