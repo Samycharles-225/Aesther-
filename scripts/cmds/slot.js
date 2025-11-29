@@ -4,12 +4,12 @@ module.exports = {
   config: {
     name: "slot",
     version: "1.0",
-    author: "Saimx69x",
+    author: "Christus",
     countDown: 5,
     role: 0,
     category: "game",
-    description: "🎰 A fun slot game! Place your bet, spin the reels, and see how much you can win. Excitement guaranteed every spin!",
-    usage: "slot <amount>\nExample: /slot 1000"
+    description: "🎰 Un jeu de machine à sous amusant ! Place ta mise, lance les rouleaux et découvre combien tu peux gagner. Frissons garantis à chaque spin !",
+    usage: "slot <montant>\nExemple : /slot 1000"
   },
 
   onStart: async function ({ event, api, usersData, args }) {
@@ -26,7 +26,7 @@ module.exports = {
 
     if (!bet || bet <= 0) {
       return api.sendMessage(
-        `❌ 𝐄𝐍𝐓𝐄𝐑 𝐀 𝐕𝐀𝐋𝐈𝐃 𝐁𝐄𝐓.\n𝐄𝐗𝐀𝐌𝐏𝐋𝐄: ${prefix}slot 1000`,
+        `❌ ENTREZ UNE MISE VALIDE.\nEXEMPLE : ${prefix}slot 1000`,
         event.threadID,
         event.messageID
       );
@@ -34,7 +34,7 @@ module.exports = {
 
     if (user.money < bet) {
       return api.sendMessage(
-        `❌ 𝐍𝐎𝐓 𝐄𝐍𝐎𝐔𝐆𝐇 𝐁𝐀𝐋𝐀𝐍𝐂𝐄.\n𝐁𝐀𝐋𝐀𝐍𝐂𝐄: ${user.money}$`,
+        `❌ SOLDE INSUFFISANT.\nSOLDE ACTUEL : ${user.money}$`,
         event.threadID,
         event.messageID
       );
@@ -67,20 +67,20 @@ module.exports = {
     if (s1 === s2 && s2 === s3) {
       winnings = bet * 3;
       user.money += winnings;
-      status = `✅ 𝐓𝐑𝐈𝐏𝐋𝐄 𝐌𝐀𝐓𝐂𝐇!\n│  𝐘𝐎𝐔 𝐖𝐎𝐍 ${winnings}$ 🎉`;
+      status = `✅ TRIPLE MATCH !\n│  TU AS GAGNÉ ${winnings}$ 🎉`;
     }
     else if (s1 === s2 || s1 === s3 || s2 === s3) {
       winnings = bet * 2;
       user.money += winnings;
-      status = `✅ 𝐃𝐎𝐔𝐁𝐋𝐄 𝐌𝐀𝐓𝐂𝐇!\n│  𝐘𝐎𝐔 𝐖𝐎𝐍 ${winnings}$ 🎉`;
+      status = `✅ DOUBLE MATCH !\n│  TU AS GAGNÉ ${winnings}$ 🎉`;
     }
     else {
-      status = `😢 𝐍𝐎 𝐌𝐀𝐓𝐂𝐇.\n│  𝐘𝐎𝐔 𝐋𝐎𝐒𝐓 ${bet}$`;
+      status = `😢 PAS DE MATCH.\n│  TU AS PERDU ${bet}$`;
     }
 
     await usersData.set(userId, user);
 
-    let spinningMsg = await api.sendMessage("🎰 𝐒𝐋𝐎𝐓 𝐌𝐀𝐂𝐇𝐈𝐍𝐄\nSpinning... 🍒🍋🔔", event.threadID, event.messageID);
+    let spinningMsg = await api.sendMessage("🎰 MACHINE À SOUS\nLancement... 🍒🍋🔔", event.threadID, event.messageID);
 
     const spinSteps = [
       [symbols[Math.floor(Math.random() * symbols.length)], symbols[Math.floor(Math.random() * symbols.length)], symbols[Math.floor(Math.random() * symbols.length)]],
@@ -92,13 +92,13 @@ module.exports = {
       await new Promise(r => setTimeout(r, 1000));
       await api.editMessage(
         `━━━━━━━━━━━━━━
-🎰 𝐒𝐋𝐎𝐓 𝐌𝐀𝐂𝐇𝐈𝐍𝐄
+🎰 MACHINE À SOUS
 ╭─╼━━━━━━━━━━╾─╮
 │     ${step[0]} | ${step[1]} | ${step[2]}
 │
 │  ${status}
 ╰─╼━━━━━━━━━━╾─╯
-💰 𝐁𝐀𝐋𝐀𝐍𝐂𝐄: ${user.money}$
+💰 SOLDE : ${user.money}$
 ━━━━━━━━━━━━━━`,
         spinningMsg.messageID,
         event.threadID
