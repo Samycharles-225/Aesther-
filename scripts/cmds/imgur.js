@@ -4,13 +4,13 @@ module.exports = {
   config: {
     name: "imgur",
     version: "1.0.0",
-    author: "ArYAN",
+    author: "Christus",
     countDown: 0,
     role: 0,
-    shortDescription: "Upload an image/video to Imgur",
-    longDescription: "Reply to an image/video or provide a URL to upload it to Imgur.",
-    category: "utility",
-    guide: "{pn} reply to an image/video or provide a URL"
+    shortDescription: "Téléverse une image/vidéo sur Imgur",
+    longDescription: "Répondre à une image/vidéo ou fournir une URL pour la téléverser sur Imgur.",
+    category: "utilitaire",
+    guide: "{pn} répondre à une image/vidéo ou fournir une URL"
   },
 
   onStart: async function ({ api, event, args }) {
@@ -24,7 +24,7 @@ module.exports = {
     }
 
     if (!mediaUrl) {
-      return api.sendMessage("❌ Please reply to an image/video or provide a URL!", threadID, messageID);
+      return api.sendMessage("❌ Veuillez répondre à une image/vidéo ou fournir une URL !", threadID, messageID);
     }
 
     try {
@@ -35,16 +35,16 @@ module.exports = {
 
       if (!imgurLink) {
         api.setMessageReaction("", messageID, () => {}, true);
-        return api.sendMessage("❌ Failed to upload to Imgur.", threadID, messageID);
+        return api.sendMessage("❌ Échec du téléversement sur Imgur.", threadID, messageID);
       }
 
       api.setMessageReaction("✅", messageID, () => {}, true);
       return api.sendMessage(`${imgurLink}`, threadID, messageID);
 
     } catch (err) {
-      console.error("Imgur upload error:", err);
+      console.error("Erreur de téléversement sur Imgur :", err);
       api.setMessageReaction("", messageID, () => {}, true);
-      return api.sendMessage("⚠️ An error occurred while uploading.", threadID, messageID);
+      return api.sendMessage("⚠️ Une erreur est survenue lors du téléversement.", threadID, messageID);
     }
   }
 };
