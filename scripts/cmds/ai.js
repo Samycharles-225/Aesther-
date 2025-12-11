@@ -1,3 +1,8 @@
+/*  
+   🌸✨ 𓆩 𝗔𝗘𝗦𝗧𝗛𝗘𝗥 𝗞𝗮𝘄𝗮𝗶𝗶 𝗔𝗜 𝗠𝗼𝗱𝘂𝗹𝗲 𓆪 ✨🌸
+   ❀ Made with love · Powered by cuteness · 100% aesthetic ❀
+*/
+
 const axios = require('axios');
 const validUrl = require('valid-url');
 const fs = require('fs');
@@ -5,15 +10,17 @@ const path = require('path');
 const ytSearch = require('yt-search');
 const { v4: uuidv4 } = require('uuid');
 
+// 🌸 API kawaii endpoints
 const API_ENDPOINT = "https://shizuai.vercel.app/chat";
 const CLEAR_ENDPOINT = "https://shizuai.vercel.app/chat/clear";
 const YT_API = "http://65.109.80.126:20409/aryan/yx";
 const EDIT_API = "https://gemini-edit-omega.vercel.app/edit";
 
+// 💖 Folder kawaii
 const TMP_DIR = path.join(__dirname, 'tmp');
 if (!fs.existsSync(TMP_DIR)) fs.mkdirSync(TMP_DIR);
 
-// 📥 Téléchargement de fichier
+/* 📥 KAWAII DOWNLOAD FUNCTION */
 const downloadFile = async (url, ext) => {
   const filePath = path.join(TMP_DIR, `${uuidv4()}.${ext}`);
   const response = await axios.get(url, { responseType: 'arraybuffer' });
@@ -21,22 +28,22 @@ const downloadFile = async (url, ext) => {
   return filePath;
 };
 
-// ♻️ Réinitialiser la conversation
+/* ♻️ RESET CONVERSATION – version cute */
 const resetConversation = async (api, event, message) => {
-  api.setMessageReaction("♻️", event.messageID, () => {}, true);
+  api.setMessageReaction("🌸", event.messageID, () => {}, true);
   try {
     await axios.delete(`${CLEAR_ENDPOINT}/${event.senderID}`);
-    return message.reply(`✅ Conversation reset for UID: ${event.senderID}`);
+    return message.reply("✨💖 Conversation toute propre ! (≧◡≦) ♡");
   } catch (error) {
-    console.error('❌ Reset Error:', error.message);
-    return message.reply("❌ Reset failed. Try again.");
+    return message.reply("❌ Oupsie… impossible de reset (｡•́︿•̀｡)");
   }
 };
 
-// 🎨 Fonction Edit (Gemini-Edit)
+/* 🎨 Image Edit – kawaii mode */
 const handleEdit = async (api, event, message, args) => {
   const prompt = args.join(" ");
-  if (!prompt) return message.reply("❗ Please provide text to edit or generate.");
+  if (!prompt)
+    return message.reply("❗🌸 Mets un texte pour éditer ou générer, nya~");
 
   api.setMessageReaction("⏳", event.messageID, () => {}, true);
   try {
@@ -47,10 +54,8 @@ const handleEdit = async (api, event, message, args) => {
 
     const res = await axios.get(EDIT_API, { params });
 
-    if (!res.data?.images?.[0]) {
-      api.setMessageReaction("❌", event.messageID, () => {}, true);
-      return message.reply("❌ Failed to generate or edit image.");
-    }
+    if (!res.data?.images?.[0])
+      return message.reply("❌ L'image n’a pas voulu être cute aujourd’hui >_<");
 
     const base64Image = res.data.images[0].replace(/^data:image\/\w+;base64,/, "");
     const buffer = Buffer.from(base64Image, "base64");
@@ -58,64 +63,73 @@ const handleEdit = async (api, event, message, args) => {
     const imagePath = path.join(TMP_DIR, `${Date.now()}.png`);
     fs.writeFileSync(imagePath, buffer);
 
-    api.setMessageReaction("✅", event.messageID, () => {}, true);
+    api.setMessageReaction("🌸", event.messageID, () => {}, true);
     await message.reply({ attachment: fs.createReadStream(imagePath) });
     fs.unlinkSync(imagePath);
+
   } catch (error) {
-    console.error("❌ EDIT API Error:", error.response?.data || error.message);
     api.setMessageReaction("❌", event.messageID, () => {}, true);
-    return message.reply("⚠️ Error while generating/editing image.");
+    return message.reply("⚠️ Erreur… *snif snif* (╥﹏╥)");
   }
 };
 
-// 🎬 Fonction YouTube
+/* 🎬 YouTube Downloader – cute edition */
 const handleYouTube = async (api, event, message, args) => {
   const option = args[0];
-  if (!["-v", "-a"].includes(option)) {
-    return message.reply("❌ Usage: youtube [-v|-a] <search or URL>");
-  }
+  if (!["-v", "-a"].includes(option))
+    return message.reply("❌ 🌸 Usage: Youtube [-v|-a] <search/url>");
 
   const query = args.slice(1).join(" ");
-  if (!query) return message.reply("❌ Provide a search query or URL.");
+  if (!query) return message.reply("❗ Mets ce que tu veux chercher, sweetie~");
 
   const sendFile = async (url, type) => {
     try {
       const { data } = await axios.get(`${YT_API}?url=${encodeURIComponent(url)}&type=${type}`);
+
       const downloadUrl = data.download_url;
-      if (!data.status || !downloadUrl) throw new Error("API failed");
+      if (!data.status || !downloadUrl)
+        throw new Error("Kawaii API failed");
+
       const filePath = path.join(TMP_DIR, `yt_${Date.now()}.${type}`);
       const writer = fs.createWriteStream(filePath);
       const stream = await axios({ url: downloadUrl, responseType: "stream" });
+
       stream.data.pipe(writer);
+
       await new Promise((resolve, reject) => {
         writer.on("finish", resolve);
         writer.on("error", reject);
       });
+
       await message.reply({ attachment: fs.createReadStream(filePath) });
       fs.unlinkSync(filePath);
+
     } catch (err) {
-      console.error(`${type} error:`, err.message);
-      message.reply(`❌ Failed to download ${type}.`);
+      message.reply(`❌ Impossible de télécharger ${type} (｡•́︿•̀｡)`);
     }
   };
 
-  if (query.startsWith("http")) return await sendFile(query, option === "-v" ? "mp4" : "mp3");
+  if (query.startsWith("http"))
+    return await sendFile(query, option === "-v" ? "mp4" : "mp3");
 
   try {
     const results = (await ytSearch(query)).videos.slice(0, 6);
-    if (results.length === 0) return message.reply("❌ No results found.");
+    if (results.length === 0)
+      return message.reply("❌ Rien trouvé… triste TwT");
 
-    let list = "";
+    let list = "🌸✨ Vidéos trouvées :\n";
     results.forEach((v, i) => {
       list += `${i + 1}. 🎬 ${v.title} (${v.timestamp})\n`;
     });
 
     const thumbs = await Promise.all(
-      results.map(v => axios.get(v.thumbnail, { responseType: "stream" }).then(res => res.data))
+      results.map(v =>
+        axios.get(v.thumbnail, { responseType: "stream" }).then(res => res.data)
+      )
     );
 
     api.sendMessage(
-      { body: list + "\nReply with number (1-6) to download.", attachment: thumbs },
+      { body: list + "\n✨ Réponds 1-6 pour télécharger 💖", attachment: thumbs },
       event.threadID,
       (err, info) => {
         global.GoatBot.onReply.set(info.messageID, {
@@ -128,24 +142,22 @@ const handleYouTube = async (api, event, message, args) => {
       },
       event.messageID
     );
+
   } catch (err) {
-    console.error("YouTube error:", err.message);
-    message.reply("❌ Failed to search YouTube.");
+    message.reply("❌ Désolée… YouTube fait la timide aujourd’hui (╥﹏╥)");
   }
 };
 
-// 🧠 Fonction IA principale
+/* 🧠 AI Main – aesthetic mode ON */
 const handleAIRequest = async (api, event, userInput, message, isReply = false) => {
   const args = userInput.split(" ");
   const first = args[0]?.toLowerCase();
 
-  if (["edit", "-e"].includes(first)) {
+  if (["edit", "-e"].includes(first))
     return await handleEdit(api, event, message, args.slice(1));
-  }
 
-  if (["youtube", "yt", "ytb"].includes(first)) {
+  if (["youtube", "yt", "ytb"].includes(first))
     return await handleYouTube(api, event, message, args.slice(1));
-  }
 
   const userId = event.senderID;
   let messageContent = userInput;
@@ -159,30 +171,28 @@ const handleAIRequest = async (api, event, userInput, message, isReply = false) 
     messageContent = messageContent.replace(urlMatch, '').trim();
   }
 
-  if (!messageContent && !imageUrl) {
-    api.setMessageReaction("❌", event.messageID, () => {}, true);
-    return message.reply("💬 Provide a message or image.");
-  }
+  if (!messageContent && !imageUrl)
+    return message.reply("💬 Mets un message cute ou une image ✨");
 
   try {
-    const response = await axios.post(API_ENDPOINT, { uid: userId, message: messageContent, image_url: imageUrl });
-    const { reply: textReply, image_url: genImageUrl } = response.data;
+    const response = await axios.post(API_ENDPOINT, {
+      uid: userId,
+      message: messageContent,
+      image_url: imageUrl
+    });
 
-    let finalReply = textReply || '✅ AI Response:';
-    finalReply = finalReply
-      .replace(/🎀\s*𝗦𝗵𝗶𝘇𝘂/gi, '🎀 𝗖𝗵𝗿𝗶𝘀𝘁𝘂𝘀')
-      .replace(/Shizu/gi, 'Christus')
-      .replace(/Christuska/gi, 'Christus')
-      .replace(/Aryan Chauhan/gi, 'Christus');
+    let finalReply = response.data.reply || "✨ Réponse kawaii :";
+
+    // 🌸 Signature kawaii AESTHER
+    finalReply = `🌸✨ ﹝@ 𝗔𝗘𝗦𝗧𝗛𝗘𝗥🍀🥙﹞\n\n${finalReply}`;
 
     const attachments = [];
-    if (genImageUrl) {
-      attachments.push(fs.createReadStream(await downloadFile(genImageUrl, 'jpg')));
-    }
+    if (response.data.image_url)
+      attachments.push(fs.createReadStream(await downloadFile(response.data.image_url, 'jpg')));
 
     const sentMessage = await message.reply({
       body: finalReply,
-      attachment: attachments.length > 0 ? attachments : undefined
+      attachment: attachments.length ? attachments : undefined
     });
 
     global.GoatBot.onReply.set(sentMessage.messageID, {
@@ -191,37 +201,39 @@ const handleAIRequest = async (api, event, userInput, message, isReply = false) 
       author: userId
     });
 
-    api.setMessageReaction("✅", event.messageID, () => {}, true);
+    api.setMessageReaction("🌸", event.messageID, () => {}, true);
+
   } catch (error) {
-    console.error("❌ API Error:", error.message);
     api.setMessageReaction("❌", event.messageID, () => {}, true);
-    message.reply("⚠️ AI Error:\n" + error.message);
+    return message.reply("⚠️ Oupsie, erreur… mais je reste mignonne 💗");
   }
 };
 
+/* 🌸 EXPORT kawaii MODULE */
 module.exports = {
   config: {
-    name: 'ai',
-    version: '3.2.0',
-    author: 'Christus',
+    name: 'ai-kawaii',
+    version: '4.0.0',
+    author: '🌸✨ AESTHER',
     role: 0,
-    category: 'ai',
-    longDescription: { en: 'AI + YouTube + Edit: Chat, Images, Music, Video, and Image Editing' },
+    category: 'cute-ai',
+    longDescription: {
+      en: '🌸 Cute AI: chat, videos, editing… powered by aesthetic magic ✨'
+    },
     guide: {
-      en: `.ai [message] → chat with AI  
-.ai edit [prompt] (reply to image optional) → generate or edit image  
-.ai youtube -v [query/url] → download video  
-.ai youtube -a [query/url] → download audio  
-.ai clear → reset conversation`
+      en: `🌸 .ai <message> — parler à l'IA  
+💖 .ai edit <prompt> — générer/éditer une image  
+🎀 .ai youtube -v — vidéo  
+🎶 .ai youtube -a — audio  
+♻️ .ai clear — reset kawaii`
     }
   },
 
   onStart: async function ({ api, event, args, message }) {
     const userInput = args.join(' ').trim();
-    if (!userInput) return message.reply("❗ Please enter a message.");
-    if (['clear', 'reset'].includes(userInput.toLowerCase())) {
+    if (!userInput) return message.reply("❗🌸 Mets un message mignon");
+    if (['clear', 'reset'].includes(userInput.toLowerCase()))
       return await resetConversation(api, event, message);
-    }
     return await handleAIRequest(api, event, userInput, message);
   },
 
@@ -229,25 +241,26 @@ module.exports = {
     if (event.senderID !== Reply.author) return;
     const userInput = event.body?.trim();
     if (!userInput) return;
-    if (['clear', 'reset'].includes(userInput.toLowerCase())) {
+
+    if (['clear', 'reset'].includes(userInput.toLowerCase()))
       return await resetConversation(api, event, message);
-    }
+
     if (Reply.results && Reply.type) {
-      const idx = parseInt(userInput);
-      const list = Reply.results;
-      if (isNaN(idx) || idx < 1 || idx > list.length)
-        return message.reply("❌ Invalid selection (1-6).");
-      const selected = list[idx - 1];
+      const num = parseInt(userInput);
+      if (isNaN(num) || num < 1 || num > Reply.results.length)
+        return message.reply("❌ Seulement 1 à 6 sweetie~");
+
+      const selected = Reply.results[num - 1];
       const type = Reply.type === "-v" ? "mp4" : "mp3";
       const fileUrl = `${YT_API}?url=${encodeURIComponent(selected.url)}&type=${type}`;
+
       try {
         const { data } = await axios.get(fileUrl);
-        const downloadUrl = data.download_url;
-        const filePath = await downloadFile(downloadUrl, type);
+        const filePath = await downloadFile(data.download_url, type);
         await message.reply({ attachment: fs.createReadStream(filePath) });
         fs.unlinkSync(filePath);
       } catch {
-        message.reply(`❌ Failed to download ${type}.`);
+        message.reply("❌ Impossible de télécharger TwT");
       }
     } else {
       return await handleAIRequest(api, event, userInput, message, true);
