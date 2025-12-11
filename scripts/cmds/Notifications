@@ -1,0 +1,59 @@
+module.exports = {
+  config: {
+    name: "noti",
+    aliases: ["notification"],
+    version: "1.0",
+    author: "Samy Charles",
+    role: 0,
+    countDown: 5,
+    category: "owner",
+    shortDescription: "Envoyer une notification dans tous les groupes",
+    longDescription: "Commande réservée au propriétaire pour envoyer un message global.",
+    guide: "{p}noti [message]"
+  },
+
+  onStart: async function ({ api, event, args }) {
+
+    // TON ID SEUL
+    const ownerID = "61582382664051";
+    if (event.senderID !== ownerID)
+      return api.sendMessage(
+        "❌ Cette commande est réservée au propriétaire du bot.",
+        event.threadID,
+        event.messageID
+      );
+
+    const message = args.join(" ");
+    if (!message)
+      return api.sendMessage(
+        "🌸✨ ﹝@ 𝗔𝗘𝗦𝗧𝗛𝗘𝗥🍀🥙﹞  :\nMerci d’ajouter un message.\nExemple : noti Bonjour💖",
+        event.threadID,
+        event.messageID
+      );
+
+    // Récupérer tous les groupes
+    const threads = await api.getThreadList(100, null, ["INBOX"]);
+    const groups = threads.filter(t => t.isGroup);
+
+    const notiMessage = `
+🌸✨ ── 🎀 𝗡𝗢𝗧𝗜𝗙𝗜𝗖𝗔𝗧𝗜𝗢𝗡 🎀 ── ✨🌸
+𝗠𝗲𝘀𝘀𝗮𝗴𝗲 𝗱𝘂 𝗰𝗿é𝗮𝘁𝗲𝘂𝗿 :
+
+💌 『 ${message} 』 💌
+
+🌸✨ ﹝@ 𝗔𝗘𝗦𝗧𝗛𝗘𝗥🍀🥙﹞ 
+`;
+
+    // Envoyer dans chaque groupe
+    for (const group of groups) {
+      api.sendMessage(notiMessage, group.threadID);
+      await new Promise(resolve => setTimeout(resolve, 700)); // pause pour éviter le spam
+    }
+
+    return api.sendMessage(
+      `🌸✨ ﹝@ 𝗔𝗘𝗦𝗧𝗛𝗘𝗥🍀🥙﹞  :\n✔️ Notification envoyée dans ${groups.length} groupes 💖`,
+      event.threadID,
+      event.messageID
+    );
+  }
+};
